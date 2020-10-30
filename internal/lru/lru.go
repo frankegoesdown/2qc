@@ -51,7 +51,6 @@ func (l *LRU) Put(key, value interface{}) (err error) {
 		// Verify size not exceeded
 		if l.list.Len() >= l.capacity {
 			l.removeOldest()
-
 		}
 		item = &lruItem{
 			key:   key,
@@ -70,18 +69,6 @@ func (l *LRU) removeOldest() {
 	ent := l.list.Back()
 	if ent != nil {
 		l.removeElement(ent)
-	}
-}
-
-// evict removes the oldest item from the cache.
-func (l *LRU) evict(count int) {
-	for i := 0; i < count; i++ {
-		ent := l.list.Back()
-		if ent == nil {
-			return
-		} else {
-			l.removeElement(ent)
-		}
 	}
 }
 
