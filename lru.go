@@ -3,6 +3,7 @@ package lru
 import (
 	"container/list"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -39,6 +40,28 @@ func (l *LRU) Get(key interface{}) (value Value, err error) {
 	return
 }
 
+func (l *LRU) GetString(key interface{}) (value string, err error) {
+	element, has := l.cache[key]
+	if !has {
+		err = errors.New("not found in cache")
+		return
+	}
+	l.list.MoveBefore(element, l.list.Front())
+	value = fmt.Sprintf("%v", element.Value.(*lruItem).value)
+	return
+}
+
+func (l *LRU) GetInt(key interface{}) (value int, err error) {
+	element, has := l.cache[key]
+	if !has {
+		err = errors.New("not found in cache")
+		return
+	}
+	l.list.MoveBefore(element, l.list.Front())
+	value = element.Value.(*lruItem).value.(int)
+	return
+}
+
 func (l *LRU) Put(key, value interface{}) (err error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -60,8 +83,6 @@ func (l *LRU) Put(key, value interface{}) (err error) {
 	}
 
 	return
-	//_, err = l.set(key, value)
-	//return err
 }
 
 // removeOldest removes the oldest item from the cache.
