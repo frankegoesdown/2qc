@@ -42,7 +42,7 @@ type lru struct {
 }
 
 func (l *lru) Get(key interface{}) (value Value, err error) {
-	l.lock.RLock()
+	l.lock.Lock()
 	defer l.lock.Unlock()
 	element, has := l.cache[key]
 	if !has {

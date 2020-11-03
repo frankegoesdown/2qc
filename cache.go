@@ -124,14 +124,20 @@ func (t *twoQueueCache) Add(key, value interface{}) (err error) {
 	// If the value was recently evicted, add it to the
 	// frequently used list
 	if t.recentEvict.Contains(key) {
-		t.ensureSpace(true)
+		err = t.ensureSpace(true)
+		if err != nil {
+			return
+		}
 		t.recentEvict.Remove(key)
 		err = t.frequent.Put(key, value)
 		return
 	}
 
 	// Add to the recently seen list
-	t.ensureSpace(false)
+	err = t.ensureSpace(false)
+	if err != nil {
+		return
+	}
 	err = t.recent.Put(key, value)
 	return
 }
