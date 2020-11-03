@@ -88,7 +88,7 @@ func New2QParams(size int, recentRatio, ghostRatio float64) (cache *twoQueueCach
 
 // Get looks up a key's value from the cache.
 func (t *twoQueueCache) Get(key interface{}) (value interface{}, err error) {
-	if value, err = t.frequent.Get(key); err == nil {
+	if value, err = t.recent.Get(key); err == nil {
 		return
 	}
 
@@ -102,7 +102,7 @@ func (t *twoQueueCache) Get(key interface{}) (value interface{}, err error) {
 }
 
 // Add adds a value to the cache.
-func (t *twoQueueCache) Add(key, value interface{}) (err error) {
+func (t *twoQueueCache) Put(key, value interface{}) (err error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 

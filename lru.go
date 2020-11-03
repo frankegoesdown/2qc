@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"errors"
 	"sync"
-	//"time"
 )
 
 // Key is any value which is comparable.
