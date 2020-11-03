@@ -97,7 +97,6 @@ func (t *twoQueueCache) Get(key interface{}) (value interface{}, err error) {
 	if value, ok := t.recent.Peek(key); ok {
 		t.recent.Remove(key)
 		err = t.frequent.Put(key, value)
-		return
 	}
 	return
 }
