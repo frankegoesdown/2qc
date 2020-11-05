@@ -88,13 +88,12 @@ func New2QParams(size int, recentRatio, ghostRatio float64) (cache *twoQueueCach
 
 // Get looks up a key's value from the cache.
 func (t *twoQueueCache) Get(key interface{}) (value interface{}, err error) {
-	if value, err = t.recent.Get(key); err == nil {
+	if value, err = t.frequent.Get(key); err == nil {
 		return
 	}
-
-	// If the value is contained in recent, then we
-	// promote it to frequent
-	if value, ok := t.recent.Peek(key); ok {
+	err = nil
+	if peekValue, err := t.recent.Peek(key); err == nil {
+		value = peekValue
 		t.recent.Remove(key)
 		err = t.frequent.Put(key, value)
 	}
@@ -214,11 +213,8 @@ func (t *twoQueueCache) Contains(key interface{}) bool {
 
 // Peek is used to inspect the cache value of a key
 // without updating recency or frequency.
-func (t *twoQueueCache) Peek(key interface{}) (value interface{}, ok bool) {
+func (t *twoQueueCache) Peek(key interface{}) (value interface{}, err error) {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
-	if val, ok := t.frequent.Peek(key); ok {
-		return val, ok
-	}
-	return t.recent.Peek(key)
+	return t.frequent.Peek(key)
 }

@@ -6,6 +6,9 @@ import (
 	"sync"
 )
 
+const (
+	ErrNotFoundInCache = "not found in cache"
+)
 // Key is any value which is comparable.
 // See http://golang.org/ref/spec#Comparison_operators for details.
 type Key interface{}
@@ -17,7 +20,7 @@ type LRUCache interface {
 	Get(key interface{}) (value Value, err error)
 	Put(key, value interface{}) (err error)
 	Contains(key interface{}) (ok bool)
-	Peek(key interface{}) (value interface{}, ok bool)
+	Peek(key interface{}) (value interface{}, err error)
 	Remove(key interface{}) (ok bool)
 	Len() int
 	RemoveOldest() (err error)
@@ -45,7 +48,7 @@ func (l *lru) Get(key interface{}) (value Value, err error) {
 	defer l.lock.Unlock()
 	element, has := l.cache[key]
 	if !has {
-		err = errors.New("not found in cache")
+		err = errors.New(ErrNotFoundInCache)
 		return
 	}
 	l.list.MoveBefore(element, l.list.Front())
@@ -77,9 +80,11 @@ func (l *lru) Put(key, value interface{}) (err error) {
 
 // Peek returns the key value (or undefined if not found) without updating
 // the "recently used"-ness of the key.
-func (l *lru) Peek(key interface{}) (value interface{}, ok bool) {
-	if element, ok := l.cache[key]; ok {
+func (l *lru) Peek(key interface{}) (value interface{}, err error) {
+	if element, match := l.cache[key]; match {
 		value = element.Value.(*lruItem).value
+	} else {
+		err = errors.New(ErrNotFoundInCache)
 	}
 	return
 }
