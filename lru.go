@@ -40,12 +40,12 @@ type lru struct {
 	capacity int
 	list     *list.List
 	cache    map[interface{}]*list.Element
-	lock     sync.RWMutex
+	//lock     sync.RWMutex
 }
 
 func (l *lru) Get(key interface{}) (value Value, err error) {
-	l.lock.Lock()
-	defer l.lock.Unlock()
+	//l.lock.Lock()
+	//defer l.lock.Unlock()
 	element, has := l.cache[key]
 	if !has {
 		err = errors.New(ErrNotFoundInCache)
@@ -58,8 +58,8 @@ func (l *lru) Get(key interface{}) (value Value, err error) {
 
 func (l *lru) Put(key, value interface{}) (err error) {
 	var item *lruItem
-	l.lock.Lock()
-	defer l.lock.Unlock()
+	//l.lock.Lock()
+	//defer l.lock.Unlock()
 	if it, ok := l.cache[key]; ok {
 		l.list.MoveToFront(it)
 		item = it.Value.(*lruItem)

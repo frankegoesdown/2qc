@@ -29,21 +29,9 @@ type twoQueueCache struct {
 	expiration  *time.Time
 }
 
-// New2Q creates a new twoQueueCache using the default
-// values for the parameters.
-func New2Q(size int, recentRation, ghostEntries float64) (*twoQueueCache, error) {
-	if recentRation == 0.0 {
-		recentRation = Default2QRecentRatio
-	}
-	if ghostEntries == 0.0 {
-		ghostEntries = Default2QGhostEntries
-	}
-	return New2QParams(size, recentRation, ghostEntries)
-}
-
-// New2QParams creates a new twoQueueCache using the provided
+// NewTwoQueueParams creates a new twoQueueCache using the provided
 // parameter values.
-func New2QParams(size int, recentRatio, ghostRatio float64) (cache *twoQueueCache, err error) {
+func NewTwoQueueParams(size int, recentRatio, ghostRatio float64) (cache *twoQueueCache, err error) {
 	if size <= 0 {
 		err = fmt.Errorf("invalid size")
 		return
@@ -88,9 +76,12 @@ func New2QParams(size int, recentRatio, ghostRatio float64) (cache *twoQueueCach
 
 // Get looks up a key's value from the cache.
 func (t *twoQueueCache) Get(key interface{}) (value interface{}, err error) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
 	if value, err = t.frequent.Get(key); err == nil {
 		return
 	}
+	// skipping error
 	err = nil
 	if peekValue, err := t.recent.Peek(key); err == nil {
 		value = peekValue
@@ -138,27 +129,6 @@ func (t *twoQueueCache) Put(key, value interface{}) (err error) {
 		return
 	}
 	err = t.recent.Put(key, value)
-	return
-}
-
-// ensureSpace is used to ensure we have space in the cache
-func (t *twoQueueCache) ensureSpace(recentEvict bool) (err error) {
-	// If we have space, nothing to do
-	recentLen := t.recent.Len()
-	freqLen := t.frequent.Len()
-	if recentLen+freqLen < t.size {
-		return
-	}
-
-	// If the recent buffer is larger than
-	// the target, evict from there
-	if recentLen > 0 && (recentLen > t.recentSize || (recentLen == t.recentSize && !recentEvict)) {
-		err = t.recent.RemoveOldest()
-		return
-	}
-
-	// Remove from the frequent list otherwise
-	err = t.frequent.RemoveOldest()
 	return
 }
 
@@ -217,4 +187,37 @@ func (t *twoQueueCache) Peek(key interface{}) (value interface{}, err error) {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 	return t.frequent.Peek(key)
+}
+
+// ensureSpace is used to ensure we have space in the cache
+func (t *twoQueueCache) ensureSpace(recentEvict bool) (err error) {
+	// If we have space, nothing to do
+	recentLen := t.recent.Len()
+	freqLen := t.frequent.Len()
+	if recentLen+freqLen < t.size {
+		return
+	}
+
+	// If the recent buffer is larger than
+	// the target, evict from there
+	if recentLen > 0 && (recentLen > t.recentSize || (recentLen == t.recentSize && !recentEvict)) {
+		err = t.recent.RemoveOldest()
+		return
+	}
+
+	// Remove from the frequent list otherwise
+	err = t.frequent.RemoveOldest()
+	return
+}
+
+// NewTwoQueue creates a new twoQueueCache using the default
+// values for the parameters.
+func NewTwoQueue(size int, recentRation, ghostEntries float64) (*twoQueueCache, error) {
+	if recentRation == 0.0 {
+		recentRation = Default2QRecentRatio
+	}
+	if ghostEntries == 0.0 {
+		ghostEntries = Default2QGhostEntries
+	}
+	return NewTwoQueueParams(size, recentRation, ghostEntries)
 }

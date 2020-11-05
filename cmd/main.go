@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	c, _ := easy_lru_cache.New2Q(2, 0.0, 0.0)
+	c, _ := easy_lru_cache.NewTwoQueue(2, 0.0, 0.0)
 	err := c.Put(2, 4)
 	fmt.Println(err)
 	fmt.Println(c.Get(2))
